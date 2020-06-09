@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 import random
 import time
 import json
-
-token = open("token.txt", "r").read()
+import asyncio
+import datetime
 
 
 def get_water():
@@ -51,7 +51,7 @@ class MyClient(discord.Client):
 
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
-        # self.link_pool = load_pool()
+        self.link_pool = load_pool()
 
     async def on_message(self, message):
         print('Message from {0.author}: {0.content}'.format(message))
@@ -69,6 +69,25 @@ class MyClient(discord.Client):
             await message.channel.send(gfycat_url)
 
 
+async def remind_water():
+    await client.wait_until_ready()
+    selected_channel = None
+    target_channel = 'general'
+    for ch in client.get_all_channels():
+        if ch.name == target_channel:
+            selected_channel = ch
+    print('Selected channel', selected_channel)
+
+    while not client.is_closed():
+        hour = int(datetime.datetime.now().strftime('%-H'))
+        if 9 < hour < 16 and hour % 3 == 0:
+            gfycat_url = get_water()
+            await selected_channel.send("Пийте вода! :)")
+            await selected_channel.send(gfycat_url)
+        await asyncio.sleep(3600)
+
+
 token = open("token.txt", "r").read()
 client = MyClient()
+client.loop.create_task(remind_water())
 client.run(token)
