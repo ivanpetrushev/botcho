@@ -32,6 +32,12 @@ class MyClient(discord.Client):
             gfycat_url = get_water()
             await message.channel.send("Пийте вода! :)")
             await message.channel.send(gfycat_url)
+        if message.content.startswith('!help'):
+            my_msg = "Команди: \n" \
+                     "!fun - смешна картинка (не винаги)\n" \
+                     "!weather - радара за градушките\n" \
+                     "!water - пийте вода"
+            await message.channel.send(my_msg)
 
 
 async def remind_water():
