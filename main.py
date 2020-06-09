@@ -9,13 +9,11 @@ import datetime
 
 
 def get_water():
-    url = 'https://api.gfycat.com/v1/gfycats/search?search_text=drink+water'
+    api_key = open("gfy_token.txt", "r").read()
+    url = 'http://api.giphy.com/v1/gifs/random?tag=water&api_key=' + api_key
     fp = urlopen(url)
     contents = json.load(fp)
-    print(contents)
-    item = random.choice(contents['gfycats'])
-    item_url = item['max2mbGif']
-    return item_url
+    return contents['data']['url']
 
 
 def scrape_sub(sub_name):
@@ -72,7 +70,8 @@ class MyClient(discord.Client):
 async def remind_water():
     await client.wait_until_ready()
     selected_channel = None
-    target_channel = 'general'
+    # target_channel = 'general'
+    target_channel = 'test'
     for ch in client.get_all_channels():
         if ch.name == target_channel:
             selected_channel = ch
