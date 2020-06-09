@@ -59,6 +59,9 @@ class MyClient(discord.Client):
                 self.link_pool = load_pool()
             my_msg = self.link_pool.pop()
             await message.channel.send(my_msg)
+        if message.content.startswith('!weather'):
+            url = 'http://cap.weathermod-bg.eu/GCDCAP_G.jpg'
+            await message.channel.send(url)
         if message.content.startswith('!test'):
             await message.channel.send('https://i.redd.it/b61u4gk752351.jpg')
         if message.content.startswith('!water'):
