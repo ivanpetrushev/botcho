@@ -1,69 +1,33 @@
-import discord
-from urllib.request import urlopen
-from bs4 import BeautifulSoup
-import random
-import time
-import json
 import asyncio
 import datetime
-
-
-def get_water():
-    api_key = open("gfy_token.txt", "r").read()
-    url = 'http://api.giphy.com/v1/gifs/random?tag=water&api_key=' + api_key
-    fp = urlopen(url)
-    contents = json.load(fp)
-    return contents['data']['url']
-
-
-def scrape_sub(sub_name):
-    out = []
-    print('Scraping sub', sub_name)
-    time.sleep(2)
-    url = 'https://old.reddit.com/r/' + sub_name + '/'
-    fp = urlopen(url)
-    contents = fp.read()
-    soup = BeautifulSoup(contents, "html.parser")
-
-    for item in soup.select('div[data-author-fullname]'):
-        print('item', item.attrs['data-url'])
-        img_url = item.attrs['data-url']
-        if 'i.redd.it' in img_url or 'imgur' in img_url:
-            out.append(img_url)
-    return out
-
-
-def load_pool():
-    out = []
-    subs = ['funny', 'ProgrammerHumor']
-    for sub in subs:
-        for item in scrape_sub(sub):
-            out.append(item)
-    random.shuffle(out)
-    print(f'loading pool with {len(out)} items:', out)
-    return out
+import discord
+from reddit import load_fun_pool
+from misc import get_water
+import time
 
 
 class MyClient(discord.Client):
-    link_pool = []
+    fun_link_pool = []
 
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
-        self.link_pool = load_pool()
+        # probably load this only if needed. Reddit tends to throw 429 Too many requests on frequent requests
+        # self.link_pool = load_fun_pool()
 
     async def on_message(self, message):
         print('Message from {0.author}: {0.content}'.format(message))
         print(message)
         if message.content.startswith('!fun'):
-            if len(self.link_pool) == 0:
-                self.link_pool = load_pool()
-            my_msg = self.link_pool.pop()
+            if len(self.fun_link_pool) == 0:
+                self.fun_link_pool = load_fun_pool()
+            if len(self.fun_link_pool) == 0:
+                my_msg = 'Свърши fun-а. Сядай да бачкаш :P'
+            else:
+                my_msg = self.fun_link_pool.pop()
             await message.channel.send(my_msg)
         if message.content.startswith('!weather'):
-            url = 'http://cap.weathermod-bg.eu/GCDCAP_G.jpg'
+            url = 'http://cap.weathermod-bg.eu/GCDCAP_G.jpg?nc=' + str(time.time())
             await message.channel.send(url)
-        if message.content.startswith('!test'):
-            await message.channel.send('https://i.redd.it/b61u4gk752351.jpg')
         if message.content.startswith('!water'):
             gfycat_url = get_water()
             await message.channel.send("Пийте вода! :)")
@@ -73,16 +37,15 @@ class MyClient(discord.Client):
 async def remind_water():
     await client.wait_until_ready()
     selected_channel = None
-    # target_channel = 'general'
-    target_channel = 'test'
+    target_channel = 'general'
     for ch in client.get_all_channels():
         if ch.name == target_channel:
             selected_channel = ch
-    print('Selected channel', selected_channel)
+    print('remind_water: Selected channel:', selected_channel)
 
     while not client.is_closed():
         hour = int(datetime.datetime.now().strftime('%-H'))
-        if 9 < hour < 16 and hour % 3 == 0:
+        if hour in [10, 13, 15]:
             gfycat_url = get_water()
             await selected_channel.send("Пийте вода! :)")
             await selected_channel.send(gfycat_url)
