@@ -4,6 +4,7 @@ import discord
 from reddit import load_fun_pool
 from misc import get_water
 import time
+from random import choice
 
 
 class MyClient(discord.Client):
@@ -26,7 +27,8 @@ class MyClient(discord.Client):
                 my_msg = self.fun_link_pool.pop()
             await message.channel.send(my_msg)
         if message.content.startswith('!weather'):
-            url = 'http://cap.weathermod-bg.eu/GCDCAP_G.jpg?nc=' + str(time.time())
+            url = 'http://cap.weathermod-bg.eu/GCDCAP_G.jpg?nc=' + \
+                str(time.time())
             await message.channel.send(url)
         if message.content.startswith('!water'):
             gfycat_url = get_water()
@@ -53,7 +55,9 @@ async def remind_water():
         hour = int(datetime.datetime.now().strftime('%-H'))
         if hour in [10, 13, 15]:
             gfycat_url = get_water()
-            await selected_channel.send("Пийте вода! :)")
+            water_messages = ["Пийте вода! :)", "Ти! Пи ли вода?", "Гъл-гъл-гъл", "Уморен си? Не! Пие ти се вода! :P",
+                              "Изпи ли си шишето?", "Напълни си чашата :)", "Сипи си, знаеш какво :)"]
+            await selected_channel.send(choice(water_messages))
             await selected_channel.send(gfycat_url)
         await asyncio.sleep(3600)
 
