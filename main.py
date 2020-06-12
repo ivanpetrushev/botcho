@@ -5,6 +5,7 @@ from reddit import load_fun_pool
 from misc import get_water
 import time
 from random import choice
+from lightning import LightningNotifier
 
 
 class MyClient(discord.Client):
@@ -63,7 +64,25 @@ async def remind_water():
         await asyncio.sleep(3600)
 
 
+async def remind_lightning():
+    ln = LightningNotifier()
+    await client.wait_until_ready()
+    selected_channel = None
+    target_channel = 'test'
+    for ch in client.get_all_channels():
+        if ch.name == target_channel:
+            selected_channel = ch
+    print('remind_lightning: Selected channel:', selected_channel)
+
+    while not client.is_closed():
+        msg = ln.notify()
+        if msg:
+            await selected_channel.send(msg)
+        await asyncio.sleep(120)
+
+
 token = open("token.txt", "r").read()
 client = MyClient()
 client.loop.create_task(remind_water())
+client.loop.create_task(remind_lightning())
 client.run(token)
