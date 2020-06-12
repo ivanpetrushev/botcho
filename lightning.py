@@ -40,6 +40,7 @@ class LightningNotifier():
             })
 
     def filter_latest_data(self):
+        #TODO: handle stale data
         self.data = list(self.data.values())
         self.data = self.data.pop()
         # self.data = self.data['20200612-161009']
@@ -53,6 +54,7 @@ class LightningNotifier():
             if distance < FILTER_MAX_DISTANCE:
                 close_clusters.append(cluster)
         self.data = close_clusters
+        print('LightningNotifier filter_only_nearby', close_clusters)
 
     # TODO: can we reduce this complexity down from O(N*M) ?
     def geocode_data(self):
@@ -92,13 +94,13 @@ class LightningNotifier():
 
     def bearing_to_direction(self, bearing):
         if 90 - 45 <= bearing <= 90 + 45:
-            return 'И'
+            return 'източно'
         if 90 + 45 < bearing < 270 - 45:
-            return 'Ю'
+            return 'южно'
         if 270 - 45 < bearing < 270 + 45:
-            return 'З'
+            return 'западно'
         else:
-            return 'С'
+            return 'северно'
 
     def notify(self):
         self.refresh_data()
@@ -113,9 +115,10 @@ class LightningNotifier():
                 dist = round(item['closest']['distance'])
                 bearing = round(item['closest']['bearing'])
                 direction = self.bearing_to_direction(bearing)
+                count = item['count']
                 msgs.append(
-                    f'Буря: {dist} km {direction} от {closest_name}')
+                    f'Буря: {dist} km {direction} от {closest_name} ({count} мълнии)')
                 # self.reported_clusters['closest_name'] = True
-        print('msgs', msgs)
+        # print('msgs', msgs)
 
         return "\n".join(msgs)
