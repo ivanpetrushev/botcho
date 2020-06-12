@@ -53,7 +53,8 @@ async def remind_water():
 
     while not client.is_closed():
         hour = int(datetime.datetime.now().strftime('%-H'))
-        if hour in [10, 13, 15]:
+        day_of_week = int(datetime.datetime.now().strftime('%w'))  # 0 is Sunday and 6 is Saturday
+        if hour in [10, 13, 15] and 0 > day_of_week > 6:
             gfycat_url = get_water()
             water_messages = ["Пийте вода! :)", "Ти! Пи ли вода?", "Гъл-гъл-гъл", "Уморен си? Не! Пие ти се вода! :P",
                               "Изпи ли си шишето?", "Напълни си чашата :)", "Сипи си, знаеш какво :)"]
