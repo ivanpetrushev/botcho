@@ -18,7 +18,7 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         print('Message from {0.author}: {0.content}'.format(message))
-        print(message)
+        # print(message)
         if message.content.startswith('!fun'):
             if len(self.fun_link_pool) == 0:
                 self.fun_link_pool = load_fun_pool()

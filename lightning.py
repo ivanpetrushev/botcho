@@ -11,6 +11,7 @@ class LightningNotifier():
     # my_coords = [41.648288, 25.382538]  # Kardzhali
     # my_coords = [42.344082, 27.181206]  # Sredets
     # my_coords = [42.149151, 26.797028]  # Bolyarovo
+    # my_coords = [41.385052, 2.219238]  # Barcelona
     data = None
     geocoding_data = []
     reported_clusters = {}
@@ -117,7 +118,7 @@ class LightningNotifier():
                 direction = self.bearing_to_direction(bearing)
                 count = item['count']
                 msgs.append(
-                    f'Буря: {dist} km {direction} от {closest_name} ({count} мълнии)')
+                    f'Буря: {dist} km {direction} от {closest_name} ({count} мълнии / 2мин)')
                 # self.reported_clusters['closest_name'] = True
         # print('msgs', msgs)
 
