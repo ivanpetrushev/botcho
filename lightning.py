@@ -1,6 +1,7 @@
 import json
 from geopy.distance import great_circle
 import math
+from datetime import datetime
 
 FILTER_MAX_DISTANCE = 50  # km
 GEOCODING_FILENAME = 'geocoding-places-all.json'
@@ -29,6 +30,9 @@ class LightningNotifier():
         with open(GEOCODING_FILENAME) as fp:
             geocoding_data_json = json.load(fp)
         for item in geocoding_data_json['elements']:
+            # skip villages, leave only bigger settlements
+            if item['tags']['place'] == 'village':
+                continue
             name = ''
             if 'name' in item['tags']:
                 name = item['tags']['name']
@@ -108,7 +112,7 @@ class LightningNotifier():
         self.filter_latest_data()
         self.filter_only_nearby()
         self.geocode_data()
-        # print(self.data)
+        print('lightning data', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.data)
         msgs = []
         for item in self.data:
             closest_name = item['closest']['name']
@@ -118,7 +122,7 @@ class LightningNotifier():
                 direction = self.bearing_to_direction(bearing)
                 count = item['count']
                 msgs.append(
-                    f'Буря: {dist} km {direction} от {closest_name} ({count} мълнии / 2мин)')
+                    f'Буря: {dist} km {direction} от {closest_name} ({count} мълнии / 5 мин)')
                 # self.reported_clusters['closest_name'] = True
         # print('msgs', msgs)
 

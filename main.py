@@ -78,7 +78,7 @@ async def remind_lightning():
         msg = ln.notify()
         if msg:
             await selected_channel.send(msg)
-        await asyncio.sleep(120)
+        await asyncio.sleep(300)
 
 
 token = open("token.txt", "r").read()
