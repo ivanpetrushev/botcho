@@ -98,14 +98,25 @@ class LightningNotifier():
         return compass_bearing
 
     def bearing_to_direction(self, bearing):
-        if 90 - 45 <= bearing <= 90 + 45:
-            return 'източно'
-        if 90 + 45 < bearing < 270 - 45:
-            return 'южно'
-        if 270 - 45 < bearing < 270 + 45:
-            return 'западно'
-        else:
-            return 'северно'
+        sectors = {
+            0: 'северно',
+            45: 'североизточно',
+            90: 'източно',
+            135: 'югоизточно',
+            180: 'южно',
+            225: 'югозападно',
+            270: 'западно',
+            315: 'северозападно'
+        }
+        keys = list(sectors.keys())
+        sector_half_size = 360 / len(keys) / 2
+        for i in range(len(keys)):
+            sector_key = keys[i]
+            begin = sector_key - sector_half_size
+            end = sector_key + sector_half_size
+            print('item', begin, bearing, end)
+            if begin <= bearing <= end:
+                return sectors[sector_key]
 
     def notify(self):
         self.refresh_data()
