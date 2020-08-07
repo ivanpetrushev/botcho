@@ -55,10 +55,12 @@ async def remind_water():
     while not client.is_closed():
         hour = int(datetime.datetime.now().strftime('%-H'))
         day_of_week = int(datetime.datetime.now().strftime('%w'))  # 0 is Sunday and 6 is Saturday
-        if hour in [10, 13, 15] and 0 > day_of_week > 6:
+        print(f"remind_water check: hour {hour} day_of_week {day_of_week}")
+        if hour in [10, 13, 15] and 0 < day_of_week < 6:
             gfycat_url = get_water()
-            water_messages = ["Пийте вода! :)", "Ти! Пи ли вода?", "Гъл-гъл-гъл", "Уморен си? Не! Пие ти се вода! :P",
-                              "Изпи ли си шишето?", "Напълни си чашата :)", "Сипи си, знаеш какво :)"]
+            water_messages = ["Който пие вода - не умира", "Една вода, моля", "Водна чаша, пълна с ... вода!", "Водата му е майката",
+                "Не забравяме водата, нали? :)", "Може да съм бот, ама и аз пия вода :P", "Келнер! Сипи една вода!", "Дай една вода",
+                "Студена вода, или студена бира?", "Ако се чудиш какво да правиш, що не пиеш една вода?", "3.. 2.. 1.. идва водата :)"]
             await selected_channel.send(choice(water_messages))
             await selected_channel.send(gfycat_url)
         await asyncio.sleep(3600)
@@ -68,7 +70,7 @@ async def remind_lightning():
     ln = LightningNotifier()
     await client.wait_until_ready()
     selected_channel = None
-    target_channel = 'test'
+    target_channel = 'notifications-storms'
     for ch in client.get_all_channels():
         if ch.name == target_channel:
             selected_channel = ch
@@ -83,6 +85,6 @@ async def remind_lightning():
 
 token = open("token.txt", "r").read()
 client = MyClient()
-client.loop.create_task(remind_water())
+# client.loop.create_task(remind_water()) # disabling water messages due to gfycat returning stupid results
 client.loop.create_task(remind_lightning())
 client.run(token)

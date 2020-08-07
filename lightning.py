@@ -117,6 +117,8 @@ class LightningNotifier():
             print('item', begin, bearing, end)
             if begin <= bearing <= end:
                 return sectors[sector_key]
+        # if we are still here, bearing is most likely left of the first sector
+        return sectors[keys[0]]
 
     def notify(self):
         self.refresh_data()
