@@ -17,6 +17,7 @@ BELL_AUDIO_FILENAME = 'bells-neli-7s.mp3'
 class MyClient(discord.Client):
     fun_link_pool = []
     voice_client = None
+    bells_last_played_ts = None
 
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
@@ -26,7 +27,6 @@ class MyClient(discord.Client):
         # attach to voice
         selected_channel = None
         for ch in client.get_all_channels():
-            print('channel', ch.name)
             if ch.name == TARGET_VOICE_CHANNEL:
                 selected_channel = ch
         if not selected_channel:
@@ -47,22 +47,32 @@ class MyClient(discord.Client):
             else:
                 my_msg = self.fun_link_pool.pop()
             await message.channel.send(my_msg)
+
         if message.content.startswith('!weather'):
             url = 'http://cap.weathermod-bg.eu/GCDCAP_G.jpg?nc=' + \
                 str(time.time())
             await message.channel.send(url)
+
         if message.content.startswith('!water'):
             gfycat_url = get_water()
             await message.channel.send("Пийте вода! :)")
             await message.channel.send(gfycat_url)
+
         if message.content.startswith('!kambana'):
             hour = int(datetime.datetime.now().strftime('%-H'))
             if hour < 16:
                 print(f"Requested !kambana before 16h. Current hour: {hour}")
                 return
+            now_ts = int(datetime.datetime.now().timestamp())
+            if self.bells_last_played_ts and self.bells_last_played_ts + 600 > now_ts:
+                print(f"Requested !kambana too soon, last played in {self.bells_last_played_ts}")
+                return
+            self.bells_last_played_ts = now_ts
             audio_source = discord.FFmpegPCMAudio(BELL_AUDIO_FILENAME)
+            print(f'Playing bells at {self.bells_last_played_ts}')
             if not self.voice_client.is_playing():
                 self.voice_client.play(audio_source)
+
         if message.content.startswith('!help'):
             my_msg = "Команди: \n" \
                      "!fun - смешна картинка (не винаги)\n" \
