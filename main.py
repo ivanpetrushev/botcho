@@ -9,7 +9,7 @@ import time
 from random import choice
 from lightning import LightningNotifier
 
-TARGET_VOICE_CHANNEL = 'testv'
+TARGET_VOICE_CHANNEL = 'General'
 TARGET_STORMS_CHANNEL = 'notifications-storms'
 BELL_AUDIO_FILENAME = 'bells-neli-7s.mp3'
 
@@ -19,12 +19,7 @@ class MyClient(discord.Client):
     voice_client = None
     bells_last_played_ts = None
 
-    async def on_ready(self):
-        print('Logged on as {0}!'.format(self.user))
-        # probably load this only if needed. Reddit tends to throw 429 Too many requests on frequent requests
-        # self.link_pool = load_fun_pool()
-
-        # attach to voice
+    async def join_voice_channel(self):
         selected_channel = None
         for ch in client.get_all_channels():
             if ch.name == TARGET_VOICE_CHANNEL:
@@ -34,7 +29,21 @@ class MyClient(discord.Client):
             return
         self.voice_client = await discord.VoiceChannel.connect(selected_channel, timeout=10)
         print('Voice connected')
+    
+    def after_play_bells(self, error):
+        # after= can't execute directly coroutines. asyncio can
+        coro = self.voice_client.disconnect()
+        runner = asyncio.run_coroutine_threadsafe(coro, client.loop)
+        try:
+            runner.result()
+        except:
+            # an error happened sending the message
+            pass
 
+    async def on_ready(self):
+        print('Logged on as {0}!'.format(self.user))
+        # probably load this only if needed. Reddit tends to throw 429 Too many requests on frequent requests
+        # self.link_pool = load_fun_pool()
 
     async def on_message(self, message):
         print('Message from {0.author}: {0.content}'.format(message))
@@ -69,9 +78,10 @@ class MyClient(discord.Client):
                 return
             self.bells_last_played_ts = now_ts
             audio_source = discord.FFmpegPCMAudio(BELL_AUDIO_FILENAME)
+            await self.join_voice_channel()
             print(f'Playing bells at {self.bells_last_played_ts}')
             if not self.voice_client.is_playing():
-                self.voice_client.play(audio_source)
+                self.voice_client.play(audio_source, after=self.after_play_bells)
 
         if message.content.startswith('!help'):
             my_msg = "Команди: \n" \
