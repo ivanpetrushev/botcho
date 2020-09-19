@@ -1,20 +1,40 @@
 import asyncio
 import datetime
 import discord
+import ctypes
+import ctypes.util
 from reddit import load_fun_pool
 from misc import get_water
 import time
 from random import choice
 from lightning import LightningNotifier
 
+TARGET_VOICE_CHANNEL = 'testv'
+TARGET_STORMS_CHANNEL = 'notifications-storms'
+BELL_AUDIO_FILENAME = 'bells-neli-7s.mp3'
+
 
 class MyClient(discord.Client):
     fun_link_pool = []
+    voice_client = None
 
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
         # probably load this only if needed. Reddit tends to throw 429 Too many requests on frequent requests
         # self.link_pool = load_fun_pool()
+
+        # attach to voice
+        selected_channel = None
+        for ch in client.get_all_channels():
+            print('channel', ch.name)
+            if ch.name == TARGET_VOICE_CHANNEL:
+                selected_channel = ch
+        if not selected_channel:
+            print(f"Cant find desired voice channel: {TARGET_VOICE_CHANNEL}")
+            return
+        self.voice_client = await discord.VoiceChannel.connect(selected_channel, timeout=10)
+        print('Voice connected')
+
 
     async def on_message(self, message):
         print('Message from {0.author}: {0.content}'.format(message))
@@ -35,11 +55,20 @@ class MyClient(discord.Client):
             gfycat_url = get_water()
             await message.channel.send("Пийте вода! :)")
             await message.channel.send(gfycat_url)
+        if message.content.startswith('!kambana'):
+            hour = int(datetime.datetime.now().strftime('%-H'))
+            if hour < 16:
+                print(f"Requested !kambana before 16h. Current hour: {hour}")
+                return
+            audio_source = discord.FFmpegPCMAudio(BELL_AUDIO_FILENAME)
+            if not self.voice_client.is_playing():
+                self.voice_client.play(audio_source)
         if message.content.startswith('!help'):
             my_msg = "Команди: \n" \
                      "!fun - смешна картинка (не винаги)\n" \
                      "!weather - радара за градушките\n" \
-                     "!water - пийте вода"
+                     "!water - пийте вода\n" \
+                     "!kambana - бием камбаната и си отиваме"
             await message.channel.send(my_msg)
 
 
@@ -70,9 +99,8 @@ async def remind_lightning():
     ln = LightningNotifier()
     await client.wait_until_ready()
     selected_channel = None
-    target_channel = 'notifications-storms'
     for ch in client.get_all_channels():
-        if ch.name == target_channel:
+        if ch.name == TARGET_STORMS_CHANNEL:
             selected_channel = ch
     print('remind_lightning: Selected channel:', selected_channel)
 
@@ -82,6 +110,8 @@ async def remind_lightning():
             await selected_channel.send(msg)
         await asyncio.sleep(300)
 
+opusname = ctypes.util.find_library('opus')
+discord.opus.load_opus(opusname)
 
 token = open("token.txt", "r").read()
 client = MyClient()
