@@ -12,12 +12,14 @@ from lightning import LightningNotifier
 TARGET_VOICE_CHANNEL = 'General'
 TARGET_STORMS_CHANNEL = 'notifications-storms'
 BELL_AUDIO_FILENAME = 'bells-neli-7s.mp3'
+PETEL_AUDIO_FILENAME = 'petel-iliyana-7s.mp3'
 
 
 class MyClient(discord.Client):
     fun_link_pool = []
     voice_client = None
     bells_last_played_ts = None
+    petel_last_played_ts = None
 
     async def join_voice_channel(self):
         selected_channel = None
@@ -31,6 +33,16 @@ class MyClient(discord.Client):
         print('Voice connected')
     
     def after_play_bells(self, error):
+        # after= can't execute directly coroutines. asyncio can
+        coro = self.voice_client.disconnect()
+        runner = asyncio.run_coroutine_threadsafe(coro, client.loop)
+        try:
+            runner.result()
+        except:
+            # an error happened sending the message
+            pass
+
+    def after_play_petel(self, error):
         # after= can't execute directly coroutines. asyncio can
         coro = self.voice_client.disconnect()
         runner = asyncio.run_coroutine_threadsafe(coro, client.loop)
@@ -83,6 +95,23 @@ class MyClient(discord.Client):
             if not self.voice_client.is_playing():
                 self.voice_client.play(audio_source, after=self.after_play_bells)
 
+        if message.content.startswith('!petel'):
+            hour = int(datetime.datetime.now().strftime('%-H'))
+            if hour > 13:
+                print(f"Requested !petel after 13h. Current hour: {hour}")
+                return
+            now_ts = int(datetime.datetime.now().timestamp())
+            if self.petel_last_played_ts and self.petel_last_played_ts + 600 > now_ts:
+                print(f"Requested !petel too soon, last played in {self.petel_last_played_ts}")
+                return
+            self.petel_last_played_ts = now_ts
+            audio_source = discord.FFmpegPCMAudio(PETEL_AUDIO_FILENAME)
+            await self.join_voice_channel()
+            print(f'Playing petel at {self.petel_last_played_ts}')
+            if not self.voice_client.is_playing():
+                self.voice_client.play(audio_source, after=self.after_play_petel)
+
+
         if message.content.startswith('!help'):
             my_msg = "Команди: \n" \
                      "!fun - смешна картинка (не винаги)\n" \
@@ -95,7 +124,7 @@ class MyClient(discord.Client):
 async def remind_water():
     await client.wait_until_ready()
     selected_channel = None
-    target_channel = 'general'
+    target_channel = 'office1'
     for ch in client.get_all_channels():
         if ch.name == target_channel:
             selected_channel = ch
