@@ -1,11 +1,13 @@
 import asyncio
 import datetime
+import dateparser
 import discord
 import ctypes
 import ctypes.util
 from reddit import load_fun_pool
 from misc import get_water
 import time
+import re
 from random import choice
 from lightning import LightningNotifier
 
@@ -20,6 +22,7 @@ class MyClient(discord.Client):
     voice_client = None
     bells_last_played_ts = None
     petel_last_played_ts = None
+    reminders = []
 
     async def join_voice_channel(self):
         selected_channel = None
@@ -111,13 +114,36 @@ class MyClient(discord.Client):
             if not self.voice_client.is_playing():
                 self.voice_client.play(audio_source, after=self.after_play_petel)
 
+        if message.content.startswith('!remind'):
+            matches = re.search("!remind (.+?): (.+?)$", message.content)
+            if not matches:
+                my_msg = "Ползва се: `!remind 1 day: да одрусам сливата`"
+                await message.channel.send(my_msg)
+                return
+            desired_time = matches.group(1)
+            desired_message = matches.group(2)
+            now = datetime.datetime.now()
+            res = dateparser.parse(desired_time, settings={'RELATIVE_BASE': now, 'PREFER_DATES_FROM': 'future'})
+            if not res:
+                my_msg = f"Не знам кога е `{desired_time}`. Пробвай нещо като `1 hour`, `22:30`, `tomorrow noon` и т.н."
+                await message.channel.send(my_msg)
+                return
+            self.reminders.append({
+                'desired_time': res,
+                'desired_message': desired_message,
+                'channel': message.channel,
+                'speaker': message.author,
+            })
+            my_msg = f"Сложих напомняне за: {datetime.datetime.strftime(res, '%x %X')}"
+            await message.channel.send(my_msg)
 
         if message.content.startswith('!help'):
             my_msg = "Команди: \n" \
                      "!fun - смешна картинка (не винаги)\n" \
                      "!weather - радара за градушките\n" \
                      "!water - пийте вода\n" \
-                     "!kambana - бием камбаната и си отиваме"
+                     "!kambana - бием камбаната и си отиваме\n" \
+                     "!remind 1 hour: да одрусам сливата\n"
             await message.channel.send(my_msg)
 
 
@@ -159,6 +185,16 @@ async def remind_lightning():
             await selected_channel.send(msg)
         await asyncio.sleep(300)
 
+async def remind_reminders():
+    while not client.is_closed():
+        now = datetime.datetime.now()
+        for reminder in client.reminders:
+            if now >= reminder['desired_time']:
+                msg = f"{reminder['speaker'].mention} - напомняне: {reminder['desired_message']}"
+                await reminder['channel'].send(msg)
+                client.reminders.remove(reminder)
+        await asyncio.sleep(10)
+
 opusname = ctypes.util.find_library('opus')
 discord.opus.load_opus(opusname)
 
@@ -166,4 +202,5 @@ token = open("token.txt", "r").read()
 client = MyClient()
 # client.loop.create_task(remind_water()) # disabling water messages due to gfycat returning stupid results
 client.loop.create_task(remind_lightning())
+client.loop.create_task(remind_reminders())
 client.run(token)
