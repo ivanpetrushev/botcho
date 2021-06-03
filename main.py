@@ -10,9 +10,11 @@ import time
 import re
 from random import choice
 from lightning import LightningNotifier
+from waze import WazeNotifier
 
 TARGET_VOICE_CHANNEL = 'General'
 TARGET_STORMS_CHANNEL = 'notifications-storms'
+TARGET_WAZE_CHANNEL = 'plovdiv-traffic-accidents'
 BELL_AUDIO_FILENAME = 'bells-neli-7s.mp3'
 PETEL_AUDIO_FILENAME = 'petel-iliyana-7s.mp3'
 
@@ -195,6 +197,21 @@ async def remind_reminders():
                 client.reminders.remove(reminder)
         await asyncio.sleep(10)
 
+async def remind_waze():
+    wn = WazeNotifier()
+    await client.wait_until_ready()
+    selected_channel = None
+    for ch in client.get_all_channels():
+        if ch.name == TARGET_WAZE_CHANNEL:
+            selected_channel = ch
+    print('remind_waze: Selected channel:', selected_channel)
+
+    while not client.is_closed():
+        msg = wn.notify()
+        if msg:
+            await selected_channel.send(msg)
+        await asyncio.sleep(300)
+
 opusname = ctypes.util.find_library('opus')
 discord.opus.load_opus(opusname)
 
@@ -203,4 +220,5 @@ client = MyClient()
 # client.loop.create_task(remind_water()) # disabling water messages due to gfycat returning stupid results
 client.loop.create_task(remind_lightning())
 client.loop.create_task(remind_reminders())
+client.loop.create_task(remind_waze())
 client.run(token)
