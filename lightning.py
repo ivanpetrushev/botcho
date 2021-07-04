@@ -24,7 +24,11 @@ class LightningNotifier():
 
     def refresh_data(self):
         with open('../blitzortung-capture/webserver/data.json') as fp:
-            self.data = json.load(fp)
+            try:
+                self.data = json.load(fp)
+            except err:
+                print('LightningNotifier refresh_data error', err)
+                self.data = None
 
     def load_geocoding_data(self):
         with open(GEOCODING_FILENAME) as fp:

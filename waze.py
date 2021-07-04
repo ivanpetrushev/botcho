@@ -1,4 +1,6 @@
 from urllib.request import urlopen
+from urllib.error import HTTPError
+from http.client import RemoteDisconnected
 import json
 
 # Plovdiv
@@ -10,18 +12,24 @@ URL = "https://www.waze.com/row-rtserver/web/TGeoRSS?bottom=42.109866620565185&l
 
 
 class WazeNotifier:
-    data = None
+    data = {}
     data_accidents = []
     reported_accidents = []
 
     def refresh_data(self):
-        self.data = None
-        response = urlopen(URL)
-        data_json = json.loads(response.read())
-        self.data = data_json
+        self.data = {}
+        try:
+            response = urlopen(URL)
+            data_json = json.loads(response.read())
+            self.data = data_json
+        except (HTTPError, RemoteDisconnected) as err:
+            print('WazeNotifier refresh_data error', err)
+            self.data = {}
 
     def filter_accidents(self):
         self.data_accidents = []
+        if 'alerts' not in self.data:
+            return
         for item in self.data['alerts']:
             id = item['id']
             # print('filter_accidents', id, item)
